@@ -1,0 +1,656 @@
+{
+  "meta": {
+    "reviewed_at": "2026-11-02",
+    "reviewer": "Codex 逐条人工规则审计",
+    "method": "逐条对照问题范围、原文和 L1 判定；只做审计，不修改 eval_gold.reviewed.jsonl。",
+    "category_meaning": {
+      "direct": "问题直接要求的事实、数值、结论或条件",
+      "required_condition": "不写就会让结论不完整或误导的必要条件",
+      "supplementary": "相关但问题没有要求，不能用来判整题 full 的补充信息",
+      "version_mismatch": "要点来自旧政策，与语料中的新政策冲突",
+      "wrong": "与原文或问题不符"
+    },
+    "conclusions": [
+      "先修订 answer_points 口径：Q11、Q15、Q18 等只保留问题直接要求的要点，补充信息单列，不计入 full。",
+      "建立 v3 金标而不是覆盖旧文件：Q17 改为个人缴费 22%（8% 个人账户 + 14% 统筹），Q21 改为 2023/2025 现行四类培训补贴。",
+      "真正需要改检索/生成的是 Q5、Q13、Q22、Q24、Q25：Q5/Q22/Q25 是目标文件未进 top-k，Q24 是同一文档只召回“其他事项”块，Q13 是资格条件漏写。",
+      "生成侧先做结构化要点清单，优先解决 Q13 这类多条件漏写；不要先继续调 per-sub 配额。",
+      "修复检索后用 v3 金标重跑 L1，并保留旧口径对照，避免直接比较不同金标下的分数。"
+    ]
+  },
+  "questions": [
+    {
+      "query": "东莞吸纳就业困难人员社保补贴覆盖哪些险种？2026年春节企业新招用员工一次性补贴是多少？",
+      "notes": "第3条是混合要点：最高30万元属于金额口径，3:7财政分担与问题无关，已拆开审计。",
+      "points": [
+        {
+          "index": 1,
+          "category": "direct",
+          "reason": "问题直接问险种，回答四项齐全。"
+        },
+        {
+          "index": 2,
+          "category": "direct",
+          "reason": "问题直接问补贴金额，回答1000元/人。"
+        },
+        {
+          "index": 3,
+          "category": "supplementary",
+          "reason": "整条包含直接金额和无关财政分担，拆开判断。",
+          "parts": [
+            {
+              "text": "每家企业最高30万元",
+              "category": "direct",
+              "covered": true,
+              "reason": "回答已写每家企业最高30万元。"
+            },
+            {
+              "text": "补贴资金由市、镇街（园区）财政按3:7比例负担",
+              "category": "supplementary",
+              "covered": false,
+              "reason": "问题没有问财政分担比例。"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "query": "东莞吸纳退役军人就业补贴是多少？吸纳防止返贫致贫对象就业补贴是多少？",
+      "notes": "问题只问金额，劳动合同和缴费月数属于补充资格信息。",
+      "points": [
+        {
+          "index": 1,
+          "category": "direct",
+          "reason": "问题直接问退役军人补贴金额。"
+        },
+        {
+          "index": 2,
+          "category": "supplementary",
+          "reason": "金额题不要求展开合同和缴费条件。"
+        },
+        {
+          "index": 3,
+          "category": "direct",
+          "reason": "问题直接问防止返贫对象补贴金额。"
+        },
+        {
+          "index": 4,
+          "category": "supplementary",
+          "reason": "金额题不要求展开合同和缴费条件。"
+        }
+      ]
+    },
+    {
+      "query": "东莞灵活就业社保补贴每月多少？员工制家政企业社保补贴按什么比例补？",
+      "notes": "问题只问金额和比例，资格条件属于补充信息。",
+      "points": [
+        {
+          "index": 1,
+          "category": "direct",
+          "reason": "问题直接问每月金额。"
+        },
+        {
+          "index": 2,
+          "category": "supplementary",
+          "reason": "问题没有要求展开灵活就业认定条件。"
+        },
+        {
+          "index": 3,
+          "category": "direct",
+          "reason": "问题直接问补贴比例。"
+        },
+        {
+          "index": 4,
+          "category": "supplementary",
+          "reason": "问题没有要求展开家政企业资格条件。"
+        }
+      ]
+    },
+    {
+      "query": "东莞的一次性创业补贴，已经落户东莞的创业人员能按东莞现行规定纳入补贴对象吗？",
+      "notes": "问题只问能否纳入对象范围，省指导清单框架属于补充依据。",
+      "points": [
+        {
+          "index": 1,
+          "category": "direct",
+          "reason": "问题直接问能否纳入。"
+        },
+        {
+          "index": 2,
+          "category": "supplementary",
+          "reason": "政策框架依据不是问题要求的结论。"
+        }
+      ]
+    },
+    {
+      "query": "东莞职业介绍补贴标准是多少？员工制家政企业吸纳就业补贴怎么算？",
+      "notes": "检索 top5 未命中 2026《职业介绍补贴》政策解读，回答才说资料未载明。",
+      "points": [
+        {
+          "index": 1,
+          "category": "direct",
+          "reason": "gold 原文明确每人400元；这是检索漏召回导致的真实缺口。"
+        },
+        {
+          "index": 2,
+          "category": "supplementary",
+          "reason": "问题问标准，不要求展开6个月缴费条件。"
+        },
+        {
+          "index": 3,
+          "category": "direct",
+          "reason": "问题直接问吸纳就业补贴计算标准。"
+        },
+        {
+          "index": 4,
+          "category": "required_condition",
+          "reason": "20人以上是计算门槛，不写会让“怎么算”不完整。"
+        }
+      ]
+    },
+    {
+      "query": "在东莞办在职人才入户，申请时是不是必须正在缴城镇职工养老保险？如果社保暂停了或者还没缴费，还能通过吗？",
+      "notes": "第4条是职称/技能证书分支的参保时限，问题没有问。",
+      "points": [
+        {
+          "index": 1,
+          "category": "direct",
+          "reason": "问题直接问申请时是否必须正在缴。"
+        },
+        {
+          "index": 2,
+          "category": "direct",
+          "reason": "问题直接问暂停参保能否通过。"
+        },
+        {
+          "index": 3,
+          "category": "direct",
+          "reason": "问题直接问未缴费能否通过。"
+        },
+        {
+          "index": 4,
+          "category": "supplementary",
+          "reason": "问题没有问职称/技能证书分支的参保时限。"
+        }
+      ]
+    },
+    {
+      "query": "在东莞，已经达到或超过国家规定退休年龄才申请一次性缴费，缴清后也符合按月领取养老金的年限条件，首次养老金是从缴清费用的下个月开始发吗？之前的不补发吗？",
+      "notes": "L1 把分对象回答误判为未覆盖；企业未参保人员分支已明确写“之前不补发”。",
+      "points": [
+        {
+          "index": 1,
+          "category": "direct",
+          "reason": "问题直接问首次发放时间。"
+        },
+        {
+          "index": 2,
+          "category": "direct",
+          "audit_covered": true,
+          "reason": "回答已写企业未参保人员之前不补发，L1 误判。"
+        },
+        {
+          "index": 3,
+          "category": "supplementary",
+          "reason": "问题没有问基础养老金计发基数。"
+        }
+      ]
+    },
+    {
+      "query": "广东超过法定退休年龄的未参保人员还能不能一次性缴费参加企业职工养老保险？",
+      "notes": "第3条“经与联合发文单位协商一致”是制定过程，不影响结论。",
+      "points": [
+        {
+          "index": 1,
+          "category": "direct",
+          "reason": "问题直接问能不能一次性缴费。"
+        },
+        {
+          "index": 2,
+          "category": "required_condition",
+          "reason": "8项旧政策不再适用是结论的直接依据。"
+        },
+        {
+          "index": 3,
+          "category": "supplementary",
+          "reason": "联合发文单位协商过程不是问题要求。"
+        }
+      ]
+    },
+    {
+      "query": "我今年30岁，不是全日制在校生，也不是机关事业单位在编人员，能申领职业技能培训补贴吗？",
+      "notes": "L1 漏看了回答中“不属于机关事业单位在编人员、已依法享受养老保险待遇人员”这句。",
+      "points": [
+        {
+          "index": 1,
+          "category": "direct",
+          "reason": "问题直接问30岁是否符合年龄要求。"
+        },
+        {
+          "index": 2,
+          "category": "required_condition",
+          "reason": "非全日制在校生是申领条件。"
+        },
+        {
+          "index": 3,
+          "category": "required_condition",
+          "audit_covered": true,
+          "reason": "回答已明确写不属在编人员和已享受养老待遇人员，L1 误判。"
+        }
+      ]
+    },
+    {
+      "query": "我在深圳，2010年1月1日到新条例生效前办了申请并按月领养老金，但当时没按国家转移接续办法算待遇，现在能不能按新条例重新计算并补发差额？",
+      "notes": "三条都在问题范围内，回答完整，L1 也全中。",
+      "points": [
+        {
+          "index": 1,
+          "category": "direct",
+          "reason": "问题直接问能否重新计算。"
+        },
+        {
+          "index": 2,
+          "category": "direct",
+          "reason": "问题直接问能否补发差额。"
+        },
+        {
+          "index": 3,
+          "category": "required_condition",
+          "reason": "适用对象是结论成立的必要条件。"
+        }
+      ]
+    },
+    {
+      "query": "我是211大学本科毕业、有学士学位，所学专业也在《重点产业领域专业目录》里，这样符合教育背景条件吗？",
+      "notes": "问题明确限定“教育背景条件”，年龄和首次在深就业属于其他基本条件。",
+      "points": [
+        {
+          "index": 1,
+          "category": "direct",
+          "reason": "问题直接问教育背景是否匹配。"
+        },
+        {
+          "index": 2,
+          "category": "supplementary",
+          "reason": "问题没有问年龄基本条件。"
+        },
+        {
+          "index": 3,
+          "category": "supplementary",
+          "reason": "问题没有问首次在深就业基本条件。"
+        }
+      ]
+    },
+    {
+      "query": "我本省户籍，在东莞，城镇户口，女42岁现在没工作，能算就业困难人员申请优先帮扶吗？",
+      "notes": "三条都在问题范围内，回答完整。",
+      "points": [
+        {
+          "index": 1,
+          "category": "direct",
+          "reason": "问题直接问是否属于就业困难人员。"
+        },
+        {
+          "index": 2,
+          "category": "required_condition",
+          "reason": "劳动年龄、劳动能力、就业意愿是无业认定的必要条件。"
+        },
+        {
+          "index": 3,
+          "category": "direct",
+          "reason": "问题直接问能否优先帮扶。"
+        }
+      ]
+    },
+    {
+      "query": "深圳户籍、毕业5年内的毕业生，在深圳注册3年内的初创企业能申请创业补贴吗？",
+      "notes": "缺失的是“未享受过补贴、正常经营并缴社保”等资格条件，不是无关补充。",
+      "points": [
+        {
+          "index": 1,
+          "category": "direct",
+          "reason": "问题直接问该身份是否符合自主创业人员条件。"
+        },
+        {
+          "index": 2,
+          "category": "required_condition",
+          "reason": "初创企业定义和未享受过创业补贴是资格条件。"
+        },
+        {
+          "index": 3,
+          "category": "required_condition",
+          "reason": "未享受过扶持补贴、正常经营并缴社保是资格条件。"
+        }
+      ]
+    },
+    {
+      "query": "深圳招博士后时，是不是更愿意要境内外排名靠前高校毕业的博士，或者科研能力强的优秀博士毕业生？",
+      "notes": "第3条是港澳高校联合招收的专项措施，问题没有问。",
+      "points": [
+        {
+          "index": 1,
+          "category": "direct",
+          "reason": "问题直接问是否偏好排名靠前高校博士。"
+        },
+        {
+          "index": 2,
+          "category": "direct",
+          "reason": "问题直接问是否偏好科研能力强博士。"
+        },
+        {
+          "index": 3,
+          "category": "supplementary",
+          "reason": "港澳高校联合招收是专项补充措施。"
+        }
+      ]
+    },
+    {
+      "query": "深圳新引进博士人才入户补贴多少？深圳最低工资标准是多少？",
+      "notes": "问题只问博士补贴和最低工资，硕士/本科标准属于补充。",
+      "points": [
+        {
+          "index": 1,
+          "category": "direct",
+          "reason": "问题直接问博士补贴金额。"
+        },
+        {
+          "index": 2,
+          "category": "supplementary",
+          "reason": "问题没有问硕士和本科标准。"
+        },
+        {
+          "index": 3,
+          "category": "direct",
+          "reason": "问题直接问最低工资月标准。"
+        },
+        {
+          "index": 4,
+          "category": "direct",
+          "reason": "小时最低工资是同一最低工资标准的组成部分。"
+        }
+      ]
+    },
+    {
+      "query": "深圳毕业5年内的学生自己创办初创企业并当法定代表人，还能申请初创企业补贴和场租补贴吗？",
+      "notes": "第1条包含“2024年起”这一非问题要求的日期；拆成“可以申请”与学生对象范围，避免 L1 因日期未写而误判。",
+      "points": [
+        {
+          "index": 1,
+          "category": "direct",
+          "reason": "整条混合了直接结论和非必要日期，拆开判断。",
+          "parts": [
+            {
+              "text": "可以，毕业5年内的学生属于自主创业人员对象范围",
+              "category": "direct",
+              "covered": true,
+              "reason": "回答明确写可以，并列出学生对象范围。"
+            },
+            {
+              "text": "自2024年1月1日起扩大对象范围",
+              "category": "supplementary",
+              "covered": false,
+              "reason": "问题没有问政策生效日期。"
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "category": "direct",
+          "reason": "整条混合了问题直接要求和额外补贴，拆开判断。",
+          "parts": [
+            {
+              "text": "自主创业人员在深圳创办初创企业并担任法定代表人或个体工商户经营者的，可按规定享受初创企业补贴和场租补贴",
+              "category": "direct",
+              "covered": true,
+              "reason": "回答已写可申请初创企业补贴和场租补贴。"
+            },
+            {
+              "text": "可同时享受创业带动就业补贴",
+              "category": "supplementary",
+              "covered": false,
+              "reason": "问题没有问创业带动就业补贴。"
+            }
+          ]
+        },
+        {
+          "index": 3,
+          "category": "supplementary",
+          "reason": "自主创业人员社保补贴不在问题范围内。"
+        }
+      ]
+    },
+    {
+      "query": "深圳的个人缴费人员自己定缴费基数后，每个月基本养老保险和地方补充养老保险分别按什么比例缴？",
+      "notes": "gold 来自2012年旧条例；语料中2021年现行条例已改为22%（8%+14%），回答采用了现行值。",
+      "points": [
+        {
+          "index": 1,
+          "category": "version_mismatch",
+          "reason": "2012年旧值为21%，2021年现行值为22%。",
+          "replacement": {
+            "text": "个人缴费人员按自行确定缴费基数的22%缴纳基本养老保险费",
+            "category": "direct",
+            "covered": true,
+            "reason": "回答采用2021年现行条例。"
+          }
+        },
+        {
+          "index": 2,
+          "category": "version_mismatch",
+          "reason": "2012年旧值为8%个人账户+13%统筹，2021年现行为8%+14%。",
+          "replacement": {
+            "text": "其中8%记入个人账户，14%记入基本养老保险统筹基金",
+            "category": "direct",
+            "covered": true,
+            "reason": "回答采用2021年现行条例。"
+          }
+        },
+        {
+          "index": 3,
+          "category": "direct",
+          "reason": "地方补充养老保险比例问题直接要求。"
+        }
+      ]
+    },
+    {
+      "query": "深圳的公益性岗位是不是优先安排距退休不到5年的就业困难人员？",
+      "notes": "问题只问是否优先安排，补贴标准和社保补贴属于补充。",
+      "points": [
+        {
+          "index": 1,
+          "category": "direct",
+          "reason": "问题直接问是否优先安排。"
+        },
+        {
+          "index": 2,
+          "category": "supplementary",
+          "reason": "问题没有问公益性岗位补贴标准。"
+        },
+        {
+          "index": 3,
+          "category": "supplementary",
+          "reason": "问题没有问社保补贴。"
+        }
+      ]
+    },
+    {
+      "query": "深圳的初创企业招了户籍人员，签了1年以上劳动合同并且社保交了6个月以上，能申请创业带动就业补贴吗？",
+      "notes": "问题只问能否申请，补贴金额和申请时点属于补充。",
+      "points": [
+        {
+          "index": 1,
+          "category": "direct",
+          "reason": "问题直接问能否申请创业带动就业补贴。"
+        },
+        {
+          "index": 2,
+          "category": "supplementary",
+          "reason": "问题没有问补贴金额。"
+        },
+        {
+          "index": 3,
+          "category": "supplementary",
+          "reason": "问题没有问补贴金额。"
+        },
+        {
+          "index": 4,
+          "category": "supplementary",
+          "reason": "问题没有问申请时点。"
+        }
+      ]
+    },
+    {
+      "query": "深圳的省级重点中职或技工学校，主体专业教学内容符合国家标准，毕业生理论和技能操作都合格还拿到学历证书，能不能视同职业技能鉴定合格直接发职业资格证书？",
+      "notes": "学校范围、课程、考核和学历条件都是判断能否视同合格的必要条件。",
+      "points": [
+        {
+          "index": 1,
+          "category": "direct",
+          "reason": "问题直接问能否视同合格并发证。"
+        },
+        {
+          "index": 2,
+          "category": "required_condition",
+          "reason": "限定学校范围是结论成立的必要条件。"
+        },
+        {
+          "index": 3,
+          "category": "required_condition",
+          "reason": "课程与国家标准相符是必要条件。"
+        },
+        {
+          "index": 4,
+          "category": "required_condition",
+          "reason": "考核合格并取得学历证书是必要条件。"
+        }
+      ]
+    },
+    {
+      "query": "深圳职业技能培训补贴包括哪些项目？自主创业场租补贴第二年每月多少？",
+      "notes": "gold 来自2016年旧办法；语料中2023/2025现行办法已改为四类培训补贴，回答采用现行四类。",
+      "points": [
+        {
+          "index": 1,
+          "category": "version_mismatch",
+          "reason": "2016年旧清单已不再是现行分类。",
+          "replacement": {
+            "text": "现行职业技能培训补贴包括职业技能提升补贴、职业技能评价补贴、专项职业能力考核补贴、项目制培训补贴四类",
+            "category": "direct",
+            "covered": true,
+            "reason": "回答采用2023/2025现行政策。"
+          }
+        },
+        {
+          "index": 2,
+          "category": "version_mismatch",
+          "reason": "与第1条同属2016年旧清单，合并为一条现行分类，不重复计分。"
+        },
+        {
+          "index": 3,
+          "category": "direct",
+          "reason": "问题直接问第二年每月场租补贴。"
+        },
+        {
+          "index": 4,
+          "category": "supplementary",
+          "reason": "主办载体租金减免是另一档规则，问题没有问。"
+        }
+      ]
+    },
+    {
+      "query": "深圳自主创业的场租补贴每月多少？就业困难人员灵活就业社保补贴按什么标准？",
+      "notes": "检索 top5 未命中2013年《深圳市就业困难人员灵活就业补贴办法》，回答才说标准未载明。",
+      "points": [
+        {
+          "index": 1,
+          "category": "direct",
+          "reason": "问题直接问场租补贴月标准。"
+        },
+        {
+          "index": 2,
+          "category": "supplementary",
+          "reason": "主办载体减免比例是另一档规则，问题没有问。"
+        },
+        {
+          "index": 3,
+          "category": "version_mismatch",
+          "reason": "2013年《深圳市就业困难人员灵活就业补贴办法》已被2023年办法废止，现行标准改为实际缴费额2/3且不超过600元/月。",
+          "replacement": {
+            "text": "就业困难人员灵活就业社保补贴自2024年1月1日起，每月按本人实际缴费额的三分之二且不超过600元的标准给予补贴",
+            "category": "direct",
+            "covered": true,
+            "reason": "回答采用2023年现行办法，符合现行标准。"
+          }
+        },
+        {
+          "index": 4,
+          "category": "supplementary",
+          "reason": "问题问标准，没有问补贴期限。"
+        }
+      ]
+    },
+    {
+      "query": "东莞乡村公益性岗位补贴按什么标准？城镇公益性岗位补贴能领多久？",
+      "notes": "第2条城镇岗位标准不在问题范围内；第1、3条回答完整。",
+      "points": [
+        {
+          "index": 1,
+          "category": "direct",
+          "reason": "问题直接问乡村岗位补贴标准。"
+        },
+        {
+          "index": 2,
+          "category": "supplementary",
+          "reason": "问题问城镇岗位期限，没有问城镇岗位标准。"
+        },
+        {
+          "index": 3,
+          "category": "direct",
+          "reason": "问题直接问城镇岗位补贴期限。"
+        }
+      ]
+    },
+    {
+      "query": "东莞灵活就业社保补贴能领多久？城镇公益性岗位补贴按什么标准？",
+      "notes": "检索只命中《灵活就业社保补贴》#1的“其他事项”，未命中#0含补贴期限的主文块。",
+      "points": [
+        {
+          "index": 1,
+          "category": "supplementary",
+          "reason": "问题问期限，没有问每月金额。"
+        },
+        {
+          "index": 2,
+          "category": "direct",
+          "reason": "问题直接问期限；原文主文块已写“其余人员最长3年、距退休不足5年可延至退休”，属于真实缺口。"
+        },
+        {
+          "index": 3,
+          "category": "direct",
+          "reason": "问题直接问城镇岗位补贴标准。"
+        }
+      ]
+    },
+    {
+      "query": "深圳青年人才安居补贴每月多少？就业困难人员灵活就业补贴最长能领多久？",
+      "notes": "检索 top5 未命中2025年《关于加强青年人才来深发展服务保障的若干措施》，回答才说安居补贴未载明。",
+      "points": [
+        {
+          "index": 1,
+          "category": "direct",
+          "reason": "问题直接问安居补贴月标准；原文为每月1250元、最长24个月，属于真实缺口。"
+        },
+        {
+          "index": 2,
+          "category": "supplementary",
+          "reason": "问题问期限，没有问灵活就业补贴标准。"
+        },
+        {
+          "index": 3,
+          "category": "direct",
+          "reason": "问题直接问最长领取期限。"
+        }
+      ]
+    }
+  ]
+}

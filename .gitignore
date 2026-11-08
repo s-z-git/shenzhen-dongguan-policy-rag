@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+
+# 运行产物
+_sz_meta.json
+
+# 密钥与本地配置
+.env
+*.local
+
+# 编辑器 / 本地浏览器调试产物
+.idea/
+.vscode/
+.DS_Store
+.playwright-cli/
+
+# RAG 生成产物（可由 build_index.py / run_eval.py 重新生成）
+data/chunks.jsonl
+data/eval_report*.json
+data/l1_cache.jsonl
+# 大体积评测明细：可由 run_eval.py / judge_l1.py 重跑，不重复入库
+data/l1_report*.json
+data/rank_probe_*.json
+# 运行时 trace / 本地会话库
+data/traces/
+data/memory.db
+app/**/__pycache__/
+
+# 拼写检查本地配置（仅本地使用）
+cspell.json

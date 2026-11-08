@@ -1,0 +1,131 @@
+{
+  "summary": null,
+  "ablation": [
+    {
+      "n_all": 73,
+      "n_scored": 68,
+      "recall_at_k": 0.8970588235294118,
+      "recall_ci95": [
+        0.824,
+        0.956
+      ],
+      "mrr": 0.6737745098039217,
+      "mrr_ci95": [
+        0.584,
+        0.758
+      ],
+      "golden_coverage": 0.8676,
+      "full_recall": 0.8382,
+      "p95_latency_ms": 16.206300002522767,
+      "mean_latency_ms": 14.607876470322749,
+      "name": "纯向量"
+    },
+    {
+      "n_all": 73,
+      "n_scored": 68,
+      "recall_at_k": 0.9117647058823529,
+      "recall_ci95": [
+        0.838,
+        0.971
+      ],
+      "mrr": 0.777450980392157,
+      "mrr_ci95": [
+        0.699,
+        0.856
+      ],
+      "golden_coverage": 0.875,
+      "full_recall": 0.8382,
+      "p95_latency_ms": 87.34510000795126,
+      "mean_latency_ms": 138.72896470531808,
+      "name": "纯BM25"
+    },
+    {
+      "n_all": 73,
+      "n_scored": 68,
+      "recall_at_k": 0.9411764705882353,
+      "recall_ci95": [
+        0.882,
+        0.985
+      ],
+      "mrr": 0.7759803921568629,
+      "mrr_ci95": [
+        0.691,
+        0.85
+      ],
+      "golden_coverage": 0.8848,
+      "full_recall": 0.8235,
+      "p95_latency_ms": 84.73000000230968,
+      "mean_latency_ms": 55.552695588951735,
+      "name": "混合RRF"
+    },
+    {
+      "n_all": 73,
+      "n_scored": 68,
+      "recall_at_k": 0.9705882352941176,
+      "recall_ci95": [
+        0.926,
+        1.0
+      ],
+      "mrr": 0.8289215686274511,
+      "mrr_ci95": [
+        0.755,
+        0.896
+      ],
+      "golden_coverage": 0.9338,
+      "full_recall": 0.8971,
+      "p95_latency_ms": 9627.193699998315,
+      "mean_latency_ms": 7567.692316177486,
+      "name": "混合RRF+精排"
+    },
+    {
+      "n_all": 73,
+      "n_scored": 68,
+      "recall_at_k": 0.9411764705882353,
+      "recall_ci95": [
+        0.882,
+        0.985
+      ],
+      "mrr": 0.7941176470588236,
+      "mrr_ci95": [
+        0.714,
+        0.868
+      ],
+      "golden_coverage": 0.9044,
+      "full_recall": 0.8676,
+      "p95_latency_ms": 5259.167399985017,
+      "mean_latency_ms": 4466.475514706604,
+      "name": "纯向量+精排"
+    },
+    {
+      "diff": 0.044,
+      "ci95": [
+        -0.015,
+        0.118
+      ],
+      "significant": false,
+      "pair": "混合RRF - 纯向量"
+    },
+    {
+      "diff": 0.029,
+      "ci95": [
+        -0.044,
+        0.103
+      ],
+      "significant": false,
+      "pair": "混合RRF+精排 - 混合RRF"
+    },
+    {
+      "diff": 0.015,
+      "ci95": [
+        -0.088,
+        0.118
+      ],
+      "significant": false,
+      "pair": "纯BM25 - 纯向量"
+    }
+  ],
+  "records": [],
+  "doc_cap": 0,
+  "prompt_version": "v2",
+  "gold_file": "data\\eval_gold.reviewed.v3.jsonl"
+}

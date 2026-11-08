@@ -1,0 +1,9 @@
+#!/bin/sh
+if [ -n "$RAG_PYTHON" ]; then
+  PY="$RAG_PYTHON"
+elif [ -x "F:/CondaData/envs/rag-c8/python.exe" ]; then
+  PY="F:/CondaData/envs/rag-c8/python.exe"
+else
+  PY="python"
+fi
+"$PY" verify.py

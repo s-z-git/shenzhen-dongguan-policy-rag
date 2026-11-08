@@ -1,0 +1,10 @@
+#!/bin/sh
+# 优先使用项目环境；没有设置时回退到本机 rag-c8 解释器
+if [ -n "$RAG_PYTHON" ]; then
+  PY="$RAG_PYTHON"
+elif [ -x "F:/CondaData/envs/rag-c8/python.exe" ]; then
+  PY="F:/CondaData/envs/rag-c8/python.exe"
+else
+  PY="python"
+fi
+"$PY" scripts/pre_commit_check.py
