@@ -168,6 +168,11 @@ def is_refusal(text: str) -> bool:
     # 只有“整题拒答”才算拒答；正文里局部说“某小问无法回答”不应覆盖整题。
     if t.startswith(REFUSAL.rstrip("。")):
         return True
+    # 只要给了可核验出处，就说明回答已经落到具体条款上，属于“某项未载明”
+    # 或“已失效但无替代文件”，不是整题拒答。实测 8 条非 boundary 误判
+    # 全部带 1 条引用，5 条 boundary 全是 0 引用。
+    if CITE_RE.search(t):
+        return False
     if "无法回答" in body and len(body) <= 80:
         return True
     if len(body) <= 120 and any(p in body for p in ("不能提供", "不能泄露", "不便提供", "无法提供")):
