@@ -20,7 +20,7 @@
 - `latency_budget.md` 增加滚动样本快照说明；`streaming_ttft.md` 标注样本含 1 条拒答、1 条 stale。
 - 修复 `stats.py` 日期型 `--until`：只给日期时覆盖当天 23:59:59；新增 `scripts/test_stats_time.py`。
 - 新增 `scripts/test_citation_view.py`（5 项纯函数测试）和 `scripts/check_stream_consistency.py`（3/3 检索一致性）。
-- public 仓库不发布内部 Git 流程/任务规划文档。
+- public 仓库不发布内部 Git 流程文档。
 
 ## 2026-11-08 — P0-P3
 
