@@ -6,4 +6,9 @@ elif [ -x "F:/CondaData/envs/rag-c8/python.exe" ]; then
 else
   PY="python"
 fi
-"$PY" verify.py
+"$PY" verify.py || exit 1
+
+# 推送到公开仓库时，额外拦截计划性/面试/简历类措辞
+if [ "$1" = "public" ] || echo "$2" | grep -q "shenzhen-dongguan-policy-rag\.git$"; then
+  "$PY" scripts/check_public_wording.py || exit 1
+fi
