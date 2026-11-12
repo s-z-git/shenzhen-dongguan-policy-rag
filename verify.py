@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 import sys
+from typing import cast
 
 from app.config import DEFAULT, Config
 from app.eval import ABLATIONS, aggregate_answer_points
@@ -190,7 +191,8 @@ def main() -> int:
     fake_cs = [{"chunk_id": "c" + str(i), "doc_id": "d", "doc_title": "t", "year": 2026,
                 "city": "深圳", "clause_path": "全文", "clause_no": "",
                 "text": "x", "chars": 1} for i in range(6)]
-    fake_pipe = RAGPipeline(chunks=fake_cs, retriever=_FakeRetriever(fake_cs),
+    fake_pipe = RAGPipeline(chunks=fake_cs,
+                            retriever=cast(HybridRetriever, _FakeRetriever(fake_cs)),
                             cfg=Config(rerank_model=""))
     mm = fake_pipe._retrieve_multi("主问题", ["子问题A", "子问题B"], {}, None, 3)
     check("子问题分别召回后按 RRF 合并",

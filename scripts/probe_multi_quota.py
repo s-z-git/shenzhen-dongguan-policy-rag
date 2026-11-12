@@ -30,6 +30,8 @@ def main() -> None:
     gold = {x["query"]: x for x in (json.loads(l) for l in open(
         "data/eval_gold.reviewed.jsonl", encoding="utf-8") if l.strip())}
     pipe = RAGPipeline.load(DEFAULT)
+    if not pipe.chunks:
+        raise RuntimeError("chunks 为空：请先运行 python build_index.py 构建索引")
     by, eq = pipe.retriever.by_id, doc_equivalence(pipe.chunks)
     for q in QUERIES:
         gids = {eq.get(x, x) for x in golden_ids(gold[q])}

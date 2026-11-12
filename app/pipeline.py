@@ -122,10 +122,9 @@ class RAGPipeline:
     - ask():    执行一次完整问答（查询分析 → 检索 → 生成 → 核验）
     """
 
-    def __init__(self, chunks: list[dict] | None = None,
-                 retriever: HybridRetriever | None = None,
+    def __init__(self, chunks: list[dict], retriever: HybridRetriever,
                  cfg: Config | None = None):
-        """chunks / retriever 为 None 表示尚未 build 或 load（调用 ask 会直接报错，避免误用）。"""
+        """chunks / retriever 由 build() 或 load() 提供；测试可注入假检索器。"""
         self.cfg = cfg or DEFAULT
         self.chunks = chunks
         self.retriever = retriever

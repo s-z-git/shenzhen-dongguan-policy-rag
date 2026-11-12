@@ -117,7 +117,10 @@ def main() -> None:
 
     cfg = DEFAULT
     pipe = RAGPipeline.load(cfg)
-    equiv = doc_equivalence(pipe.chunks)
+    chunks = pipe.chunks
+    if not chunks:
+        raise RuntimeError("chunks 为空：请先运行 python build_index.py 构建索引")
+    equiv = doc_equivalence(chunks)
     by_id = pipe.retriever.by_id
     pipe.retriever._ensure_bm25()          # 预热，后面各池子共享
 
@@ -131,7 +134,7 @@ def main() -> None:
     for K in pools:
         print("[probe] pool=%d 检索..." % K, flush=True)
         cfg_k = replace(cfg, vector_top_k=K, bm25_top_k=K)
-        retr = HybridRetriever(pipe.chunks, cfg_k, store=pipe.retriever.store)
+        retr = HybridRetriever(chunks, cfg_k, store=pipe.retriever.store)
         retr._bm25 = pipe.retriever._bm25
         rows = []
         recs_no = []

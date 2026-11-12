@@ -132,6 +132,9 @@ def main() -> None:
           + " | llm_analysis=" + str(not a.no_llm_analysis))
 
     pipe = RAGPipeline.load(cfg)
+    # load() 正常会带上 chunks；显式判断既给出清晰报错，也让类型检查器收窄掉 None
+    if not pipe.chunks:
+        raise RuntimeError("chunks 为空：请先运行 python build_index.py 构建索引")
     equiv = doc_equivalence(pipe.chunks)      # 同一文件被两个站点各采一次时算作同一篇
     recs: list[dict] = []
     summary = None

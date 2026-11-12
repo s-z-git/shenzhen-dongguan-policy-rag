@@ -9,7 +9,10 @@ from app.retrieve.rerank import rerank
 K=20
 gold=[json.loads(l) for l in open('data/eval_gold.reviewed.jsonl',encoding='utf-8') if l.strip()]
 gold=[x for x in gold if x.get('golden_docs')]
-p=RAGPipeline.load(DEFAULT); eq=doc_equivalence(p.chunks); by=p.retriever.by_id
+p=RAGPipeline.load(DEFAULT)
+if not p.chunks:
+    raise RuntimeError("chunks 为空：请先运行 python build_index.py 构建索引")
+eq=doc_equivalence(p.chunks); by=p.retriever.by_id
 p.retriever.cfg.vector_top_k=K; p.retriever.cfg.bm25_top_k=K
 rows=[]; t0=time.perf_counter()
 for i,item in enumerate(gold,1):

@@ -36,6 +36,8 @@ def main() -> None:
     print("[ab] 题目 %d 条: %s" % (len(items), [x["query"][:24] for x in items]))
 
     pipe = RAGPipeline.load(DEFAULT)
+    if not pipe.chunks:
+        raise RuntimeError("chunks 为空：请先运行 python build_index.py 构建索引")
     equiv = doc_equivalence(pipe.chunks)
     rows = []
     for item in items:
