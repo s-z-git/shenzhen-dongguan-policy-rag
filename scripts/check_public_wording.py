@@ -28,7 +28,7 @@ KEYWORDS = (
 )
 PATTERN = re.compile("|".join(KEYWORDS))
 
-SCOPE_PREFIXES = ("docs/", "data/reports/", "app/", "scripts/", "code/")
+SCOPE_PREFIXES = (".githooks/", "docs/", "data/reports/", "app/", "scripts/", "code/")
 SCOPE_FILES = ("README.md", "CHANGELOG.md")
 SELF = "scripts/check_public_wording.py"
 # Internal Git workflow doc is never published.
