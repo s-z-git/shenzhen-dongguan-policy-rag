@@ -42,11 +42,12 @@ streamlit run app/ui/streamlit_app.py
 # 1) 解压到任意纯 ASCII 目录，例如 F:/refrag-demo
 #    压缩包内含 index/ 和 chunks.jsonl
 # 2) 把 chunks.jsonl 放回项目 data/chunks.jsonl（Linux/macOS 用 cp）
-Copy-Item "<解压目录>/chunks.jsonl" "data/chunks.jsonl"
+$demo = "F:/refrag-demo"          # 改成你的实际解压目录
+Copy-Item "$demo/chunks.jsonl" "data/chunks.jsonl"
 
 # 3) 安装依赖并设置路径
 python -m pip install -r requirements.txt
-$env:RAG_INDEX_DIR = "<解压目录>/index"
+$env:RAG_INDEX_DIR = "$demo/index"
 $env:RAG_RERANK_MODEL = ""          # 先关精排，免 1.08GB 模型下载
 $env:DEEPSEEK_API_KEY = "sk-..."
 
@@ -75,6 +76,8 @@ streamlit run app/ui/streamlit_app.py
 ---
 
 ## 效果示例（真实输出，未改写）
+
+> 示例里的“（已废止/已过有效期）”是模型对原文标题的引用；页面上的系统时效提示仍只说“可能已更新/可能已失效”。
 
 **问**：东莞本科应届生入户后能领哪些补贴
 

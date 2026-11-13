@@ -9,17 +9,20 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 
+from dotenv import load_dotenv
+
 NL = chr(10) # 换行符
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = PROJECT_ROOT / "data"
+load_dotenv(PROJECT_ROOT / ".env")
 
 # 为什么索引不放在项目目录下：FAISS 的 C++ 文件 API 用窄字符路径，
 # **写不了含中文的目录**（实测 F:\VS Code\RAG项目实战\... 写入失败，
 # 报 could not open ... No such file or directory）。
 # 所以索引单独放到纯 ASCII 目录，可用环境变量 RAG_INDEX_DIR 覆盖。
-# 默认值是作者的 Windows 目录；换机请设置 REFRAG_DATA_DIR / RAG_INDEX_DIR。
-REFRAG_DATA_DIR = Path(os.environ.get("REFRAG_DATA_DIR", r"F:\refrag-data"))
+# 默认 ~/refrag-data；本机如需 F: 路径，在 .env 里设置 REFRAG_DATA_DIR。
+REFRAG_DATA_DIR = Path(os.environ.get("REFRAG_DATA_DIR", str(Path.home() / "refrag-data")))
 INDEX_DIR = Path(os.environ.get("RAG_INDEX_DIR", str(REFRAG_DATA_DIR / "index")))
 
 
