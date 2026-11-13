@@ -51,7 +51,7 @@
 ```powershell
 $env:REFRAG_DATA_DIR = "F:\refrag-data"
 $env:RAG_REASONING_EFFORT = "none"
-& "F:\CondaData\envs\rag-c8\python.exe" stats.py --path <local-trace>
+& "python" stats.py --path <local-trace>
 ```
 
 trace 字段：`first_token_ms`（生成首字）、`ttft_ms`（端到端首字）、`timings_ms.generation`、`usage`。

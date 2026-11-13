@@ -2,9 +2,12 @@
 # 优先使用项目环境；没有设置时回退到本机 rag-c8 解释器
 if [ -n "$RAG_PYTHON" ]; then
   PY="$RAG_PYTHON"
-elif [ -x "F:/CondaData/envs/rag-c8/python.exe" ]; then
-  PY="F:/CondaData/envs/rag-c8/python.exe"
-else
+elif command -v python >/dev/null 2>&1; then
   PY="python"
+elif command -v python3 >/dev/null 2>&1; then
+  PY="python3"
+else
+  echo "python not found" >&2
+  exit 1
 fi
 "$PY" scripts/pre_commit_check.py

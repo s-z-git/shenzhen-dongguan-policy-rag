@@ -7,7 +7,7 @@ $env:HF_HOME = 'F:\HF-Cache'
 $env:PYTHONIOENCODING = 'utf-8'
 $env:PYTHONUTF8 = '1'
 $env:PYTHONPATH = $root
-$python = 'F:\CondaData\envs\rag-c8\python.exe'
+$python = if ($env:RAG_PYTHON) { $env:RAG_PYTHON } else { "python" }
 
 $runs = @(
     @{ Report = 'data/eval_report.v2_run2.json'; L1 = 'data/l1_report_v2_run2_air.json' },

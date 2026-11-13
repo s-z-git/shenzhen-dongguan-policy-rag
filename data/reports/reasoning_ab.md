@@ -39,7 +39,7 @@
 ## 复现命令
 
 ```powershell
-$py = "F:\CondaData\envs\rag-c8\python.exe"
+$py = "python"
 $env:REFRAG_DATA_DIR = "F:\refrag-data"
 $env:HF_HOME = "F:\HF-Cache"
 

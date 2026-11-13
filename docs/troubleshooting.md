@@ -5,7 +5,7 @@
 如果 PowerShell 报 `conda 不是命令`，或 `profile.ps1 被禁止加载`，不要继续用裸 `python` / `pip`。直接用环境里的 Python 全路径：
 
 ```powershell
-$py = "F:\CondaData\envs\rag-c8\python.exe"
+$py = "python"
 & $py --version
 & $py -m pip install -r requirements.txt
 ```
@@ -48,7 +48,7 @@ Key 只从环境变量读取，不写入仓库。
 ## 完整本机流程
 
 ```powershell
-$py = "F:\CondaData\envs\rag-c8\python.exe"
+$py = "python"
 $env:REFRAG_DATA_DIR = "F:\refrag-data"
 $env:HF_HOME = "F:\HF-Cache"
 
