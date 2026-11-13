@@ -36,13 +36,13 @@ streamlit run app/ui/streamlit_app.py
 
 ## 10 分钟演示（release 资产）
 
-如果只是临时演示，不必重建 4583 块索引；直接下载 Release 里的 `refrag-index-v1.zip`：
+如果只是临时演示，不必重建 4583 块索引；直接下载 [refrag-index-v1.zip](https://github.com/s-z-git/shenzhen-dongguan-policy-rag/releases/download/demo-assets-2026-11/refrag-index-v1.zip)：
 
 ```powershell
 # 1) 解压到任意纯 ASCII 目录，例如 F:
 efrag-demo
 #    压缩包内含 index\ 和 chunks.jsonl
-# 2) 把 chunks.jsonl 放回项目 data\chunks.jsonl
+# 2) 把 chunks.jsonl 放回项目 data\chunks.jsonl（Linux/macOS 用 cp）
 copy F:
 efrag-demo\chunks.jsonl data\chunks.jsonl
 
