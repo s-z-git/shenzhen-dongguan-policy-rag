@@ -39,23 +39,22 @@ streamlit run app/ui/streamlit_app.py
 如果只是临时演示，不必重建 4583 块索引；直接下载 [refrag-index-v1.zip](https://github.com/s-z-git/shenzhen-dongguan-policy-rag/releases/download/demo-assets-2026-11/refrag-index-v1.zip)：
 
 ```powershell
-# 1) 解压到任意纯 ASCII 目录，例如 F:
-efrag-demo
-#    压缩包内含 index\ 和 chunks.jsonl
-# 2) 把 chunks.jsonl 放回项目 data\chunks.jsonl（Linux/macOS 用 cp）
-copy F:
-efrag-demo\chunks.jsonl data\chunks.jsonl
+# 1) 解压到任意纯 ASCII 目录，例如 F:/refrag-demo
+#    压缩包内含 index/ 和 chunks.jsonl
+# 2) 把 chunks.jsonl 放回项目 data/chunks.jsonl（Linux/macOS 用 cp）
+Copy-Item "<解压目录>/chunks.jsonl" "data/chunks.jsonl"
 
 # 3) 安装依赖并设置路径
 python -m pip install -r requirements.txt
-$env:RAG_INDEX_DIR = "F:
-efrag-demo\index"
+$env:RAG_INDEX_DIR = "<解压目录>/index"
 $env:RAG_RERANK_MODEL = ""          # 先关精排，免 1.08GB 模型下载
 $env:DEEPSEEK_API_KEY = "sk-..."
 
 # 4) 启动
 streamlit run app/ui/streamlit_app.py
 ```
+
+> 路径示例用正斜杠；文件名里的“（已废止）”是原始政策标题，系统判断仍只说“可能已更新/可能已失效”。
 
 > 关精排会降低部分检索指标；它的作用是“10 分钟能跑起来”。首次启动还会下载 BGE 嵌入模型（约 95MB）。要复现 README 主数字，仍需保留精排模型。模型与完整索引不放进 git，走 Release / HuggingFace。
 
