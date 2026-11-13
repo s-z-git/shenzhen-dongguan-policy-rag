@@ -9,8 +9,12 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from dataclasses import replace
 from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT))
 
 from app.config import DEFAULT
 from app.eval.answer_points import aggregate_answer_points, judge_records
@@ -24,8 +28,8 @@ DEFAULT_PREFIXES = ("深圳户籍、毕业5年内的毕业生", "深圳新引进
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--gold", default="data/eval_gold.reviewed.jsonl")
-    ap.add_argument("--out", default="data/doc_cap_ab.json")
+    ap.add_argument("--gold", default=str(ROOT / "data/eval_gold.reviewed.jsonl"))
+    ap.add_argument("--out", default=str(ROOT / "data/doc_cap_ab.json"))
     ap.add_argument("--prefix", action="append", default=[])
     ap.add_argument("--workers", type=int, default=2)
     a = ap.parse_args()
@@ -64,7 +68,7 @@ def main() -> None:
             })
 
     recs, stats = judge_records(rows, model="glm-5.3", workers=a.workers,
-                                cache_path="data/l1_cache.jsonl", fallback_model="glm-5.3-flash")
+                                cache_path=str(ROOT / "data/l1_cache.jsonl"), fallback_model="glm-5.3-flash")
     for cap in (0, 1):
         sub = [r for r in rows if r["cap"] == cap]
         print("[ab] cap=%d L1 %s" % (cap, json.dumps(aggregate_answer_points(sub), ensure_ascii=False)))

@@ -38,6 +38,13 @@ $env:ZHIPU_API_KEY = "..."
 Key 只从环境变量读取，不写入仓库。
 
 
+## 会话库（2026-11-13）
+
+- `data/memory.db` 存 `sessions` + `messages(meta_json)`；删除该文件可重置全部会话。
+- 首问才落库；只打开页面不会产生空会话。
+- 旧版消息启动时会回填 `conclusion`；旧消息没有 `chunk_ids/citations`，依据卡为空是预期现象，不代表新会话有问题。
+- 页面 URL 的 `?s=<session_id>` 可恢复会话；换一个 id 等于新会话。
+
 ## 完整本机流程
 
 ```powershell

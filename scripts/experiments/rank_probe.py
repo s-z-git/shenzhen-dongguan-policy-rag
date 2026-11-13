@@ -12,9 +12,13 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 import time
 from dataclasses import replace
 from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT))
 
 from app.config import DEFAULT
 from app.eval.metrics import (aggregate_retrieval, doc_equivalence, golden_ids,
@@ -104,10 +108,10 @@ def make_rec(item: dict, res: dict, by_id: dict, equiv: dict, dt_ms: float) -> d
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--gold", default="data/eval_gold.reviewed.jsonl")
+    ap.add_argument("--gold", default=str(ROOT / "data/eval_gold.reviewed.jsonl"))
     ap.add_argument("--pools", default="20,50,100")
     ap.add_argument("--rerank-pools", default="")
-    ap.add_argument("--out", default="data/rank_probe.json")
+    ap.add_argument("--out", default=str(ROOT / "data/rank_probe.json"))
     ap.add_argument("--k", type=int, default=5)
     a = ap.parse_args()
 

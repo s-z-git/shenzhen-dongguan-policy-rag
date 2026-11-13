@@ -6,7 +6,7 @@
 
 ![离线索引与在线问答架构](docs/architecture.png)
 
-![快速模式：结论 + 引用卡片 + 核验徽章](docs/images/ui-fast-mode.png)
+![网页界面：时效提示 + 一句话结论 + 依据卡 + 核验脚注](docs/images/ui-answer.png)
 
 ## 核心结果（当前口径）
 
@@ -30,7 +30,48 @@ python verify.py
 streamlit run app/ui/streamlit_app.py
 ```
 
+> 需要 `DEEPSEEK_API_KEY`；未配置时页面能打开，但提问会返回错误卡。模型默认 `deepseek-flash`，可在 `app/config.py` 或环境变量覆盖。
+
 环境变量、Windows conda 排错和索引路径见 [docs/troubleshooting.md](docs/troubleshooting.md)。更多证据：[报告索引](data/reports/README.md) · [延迟预算](data/reports/latency_budget.md) · [流式 TTFT](data/reports/streaming_ttft.md) · [reasoning A/B](data/reports/reasoning_ab.md)。
+
+## 10 分钟演示（release 资产）
+
+如果只是临时演示，不必重建 4583 块索引；直接下载 Release 里的 `refrag-index-v1.zip`：
+
+```powershell
+# 1) 解压到任意纯 ASCII 目录，例如 F:
+efrag-demo
+#    压缩包内含 index\ 和 chunks.jsonl
+# 2) 把 chunks.jsonl 放回项目 data\chunks.jsonl
+copy F:
+efrag-demo\chunks.jsonl data\chunks.jsonl
+
+# 3) 安装依赖并设置路径
+python -m pip install -r requirements.txt
+$env:RAG_INDEX_DIR = "F:
+efrag-demo\index"
+$env:RAG_RERANK_MODEL = ""          # 先关精排，免 1.08GB 模型下载
+$env:DEEPSEEK_API_KEY = "sk-..."
+
+# 4) 启动
+streamlit run app/ui/streamlit_app.py
+```
+
+> 关精排会降低部分检索指标；它的作用是“10 分钟能跑起来”。首次启动还会下载 BGE 嵌入模型（约 95MB）。要复现 README 主数字，仍需保留精排模型。模型与完整索引不放进 git，走 Release / HuggingFace。
+
+## 网页界面（2026-11-13 改造）
+
+![网页界面空态：会话列表 + 示例问题 + 输入框](docs/images/ui-empty.png)
+
+- **左侧会话**：按「今天 / 昨天 / MM-DD」分组，标题 = 创建时间 + 首问前 12 字；支持新建、切换、删除；`?s=<session_id>` 刷新恢复。首问才落库，只打开页面不会产生空会话。
+- **四层答案**：时效条 → 一句话结论（≤60 字）→ ≤4 条要点 → 依据卡。依据卡默认折叠，点开显示高亮原文。
+- **引用角标**：正文里的 `[出处: 文件名（条款）]` 渲染为 `[1][2]`，按首次出现顺序映射；同一文件的不同写法按「文件名 + 条款 + 年份」去重。
+- **时效口径**：只写「可能已更新 / 可能已失效」，不臆断废止；文件名里的「（已废止）」原样保留。
+- **特殊状态**：超范围、资料不足、调用失败分别用状态卡，给出可问方向 / 可确认部分 / 重试入口。
+- **存储**：`data/memory.db` 的 `sessions` + `messages(meta_json)`；旧消息启动时回填 `conclusion`，供追问改写使用。
+- **多轮边界**：`rewrite_query` 只接收「问题 + 结论（≤120 字）」，生成模型仍只收到改写后的问题和条款；多轮质量未做专项评测。
+
+更多截图：[多轮](docs/images/ui-multiturn.png) · [超范围](docs/images/ui-refuse.png) · [错误](docs/images/ui-error.png)。
 
 ---
 
@@ -91,13 +132,15 @@ app/
 │  └─ verify.py               生成后核验：引用真实性 + 数字溯源
 ├─ eval/                      指标（含 bootstrap CI）+ 消融 + L1 聚合
 ├─ ui/
-│  ├─ streamlit_app.py        网页界面（结果持久化到 session_state）
+│  ├─ streamlit_app.py        会话回放 + 四层答案 + 状态卡
+│  ├─ session_list.py         侧栏会话列表 / 新建 / 切换 / 删除
 │  └─ citation_view.py        出处映射 + 条款标题高亮
-├─ memory.py                  最小多轮会话（SQLite，demo，未做多轮评测）
+├─ memory.py                  SQLite 会话与消息（sessions + meta_json）
 ├─ observability.py           一次问答一行 trace
 └─ pipeline.py                端到端编排（含原问题锚点；CLI / UI / 评测共用）
 
 build_index.py / ask.py / run_eval.py / verify.py / review_eval.py / judge_l1.py   ← 入口脚本
+scripts/experiments/           一次性探针（rank_probe / doc_cap A-B）
 data/raw/                    458 份政策 Markdown（深圳 268 / 东莞 190）
 ```
 
@@ -171,6 +214,7 @@ data/raw/                    458 份政策 Markdown（深圳 268 / 东莞 190）
 - reasoning token 在旧的 default 口径下约占 output 的 91.6%（P0 A/B 实测 91.32%）；这是 v1.1 慢的主要原因。
 - clause gold 仅 24 条，不能代表 multi/stale；其中 16 条 evidence 是自动摘录。
 - 检索指标含 LLM 查询分析噪声；同代码三轮 MRR 在 0.8331–0.8343 抖动，见 `data/reports/repeat_summary.md`。
+- 多轮只做「改写 + 回放」，没有多轮质量评测；跨轮指代失败时仍可能答偏。
 
 ### 我做过的负面结论
 
@@ -294,7 +338,7 @@ v2 prompt 跑了 3 次（同一裁判 GLM 4.5 Air）：
 - **最小多轮（demo，未做多轮评测）**：`app/memory.py`（SQLite，最近 10 条消息）+ `rewrite_query()`；示例「东莞本科生入户后能领哪些补贴」→「那深圳呢？」改写为「深圳本科生入户后能领哪些补贴？」。
 - **引用定位**：`app/ui/citation_view.py`，Streamlit 里选择出处后显示对应原文，并用 `<mark>` 高亮条款标题。
 
-![引用定位与条款高亮](docs/images/citation_highlight.png)
+![依据卡展开：条款标题高亮 + 政策原文链接](docs/images/citation_highlight.png)
 
 - **multi 专项（2026-11-02 深夜，历史子集）**：v3 strict 后，文档级选块把 multi 从 49/57（85.96%）提到 **56/57（98.25%）**，整题全中 18/25→**24/25**；人工校正 1 条 L1 误判后 57/57。11-03 全量正式结果是 54/57，见上面的 v3 收口表。
 

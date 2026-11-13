@@ -1,5 +1,10 @@
 """全量精排候选 + doc cap 对比（K=20，规则版查询分析）。"""
-import json, time
+import json, sys, time
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT))
+
 from app.config import DEFAULT
 from app.pipeline import RAGPipeline
 from app.eval.metrics import doc_equivalence, golden_ids
@@ -7,7 +12,7 @@ from app.generate import analyze_query, filters_from_analysis
 from app.retrieve.rerank import rerank
 
 K=20
-gold=[json.loads(l) for l in open('data/eval_gold.reviewed.jsonl',encoding='utf-8') if l.strip()]
+gold=[json.loads(l) for l in open(ROOT / 'data/eval_gold.reviewed.jsonl',encoding='utf-8') if l.strip()]
 gold=[x for x in gold if x.get('golden_docs')]
 p=RAGPipeline.load(DEFAULT)
 if not p.chunks:
@@ -27,7 +32,7 @@ for i,item in enumerate(gold,1):
                  'rerank':[[cid,round(float(s),6)] for cid,s in ranked],
                  'rerank_docs':[eq.get(by[cid]['doc_id'],by[cid]['doc_id']) for cid,_ in ranked]})
     if i%10==0: print('%d/%d %.0fs'%(i,len(gold),time.perf_counter()-t0),flush=True)
-json.dump(rows,open('data/rank_probe_rerank_full.json','w',encoding='utf-8'),ensure_ascii=False,indent=2)
+json.dump(rows,open(ROOT / 'data/rank_probe_rerank_full.json','w',encoding='utf-8'),ensure_ascii=False,indent=2)
 
 def pick(r,cap):
     out=[]; cnt={}

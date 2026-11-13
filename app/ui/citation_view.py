@@ -1,4 +1,4 @@
-"""Streamlit 引用定位组件：把回答里的出处映射回本轮 chunk，并高亮条款标题。
+"""引用展示：把回答里的出处映射回本轮 chunk，并高亮条款标题。
 
 注意：这里只做展示，不改变检索/生成结果。
 """
@@ -61,33 +61,6 @@ def highlight_clause(text: str, clause_path: str) -> str:
     return safe
 
 
-def render_citation_locator(st, citations: list[str], grounding: dict | None,
-                            chunks: list[dict]) -> None:
-    """在 Streamlit 页面里渲染“选择一个出处 -> 看原文高亮”。"""
-    if not citations:
-        return
-    st.subheader("引用定位")
-    selected = st.selectbox("选择一个出处，查看原文位置", citations, key="citation_locator")
-    item = find_citation_item(selected, grounding)
-    matched = find_matched_chunks(item, chunks)
-    if not matched:
-        st.warning("这条出处没有映射到本轮 top-k 原文，可能只是文件名匹配。")
-        return
-    status = (item or {}).get("status", "unknown")
-    if status == "verified":
-        st.caption("核验状态：条款级可验证")
-    elif status == "no_clause":
-        st.caption("核验状态：仅文件级（该资料块没有条款号）")
-    elif status == "clause_conflict":
-        st.warning("核验状态：条款号与原文不一致，请人工核对")
-    for c in matched:
-        st.markdown("**" + html.escape(str(c.get("doc_title") or c.get("doc_id"))) + "**")
-        st.caption("条款路径：" + str(c.get("clause_path") or "全文"))
-        html_text = highlight_clause(str(c.get("text") or ""), str(c.get("clause_path") or ""))
-        st.markdown('<div style="max-height:320px;overflow:auto;line-height:1.7">'
-                    + html_text + "</div>", unsafe_allow_html=True)
-
-
 def _citation_status_label(status: str) -> str:
     """把核验状态翻译成用户能看懂的短标签。"""
     if status == "verified":
@@ -102,7 +75,7 @@ def _citation_status_label(status: str) -> str:
 
 
 def _citation_summary(raw: str, item: dict | None, matched: list[dict]) -> tuple[str, str, str]:
-    """生成出处卡片摘要：文件名、条款号、年份。"""
+    """生成出处摘要：文件名、条款号、年份。"""
     if matched:
         first = matched[0]
         title = str(first.get("doc_title") or first.get("doc_id") or raw)
@@ -117,33 +90,59 @@ def _citation_summary(raw: str, item: dict | None, matched: list[dict]) -> tuple
 
 
 def render_citation_cards(st, citations: list[str], grounding: dict | None,
-                          chunks: list[dict]) -> None:
-    """渲染出处卡片；点开卡片可看原文，并高亮匹配到的条款标题。"""
+                          chunks: list[dict], expanded_first: bool = False) -> None:
+    """渲染依据：卡头常显（序号/文件名/条款/年份/状态），原文默认折叠。"""
     if not citations:
         return
-    st.markdown("#### 出处")
+    st.markdown('<div class="rag-kicker">依据</div>', unsafe_allow_html=True)
     for idx, raw in enumerate(citations, 1):
         item = find_citation_item(raw, grounding)
         matched = find_matched_chunks(item, chunks)
         title, clause, year = _citation_summary(raw, item, matched)
         status = (item or {}).get("status", "unknown")
-        status_label = _citation_status_label(status)
-        with st.container(border=True):
-            st.markdown("**[%d] %s（%s）** ｜ %s ｜ %s"
-                        % (idx, title, clause, year, status_label))
-            with st.expander("查看原文并高亮", expanded=False):
-                if item:
-                    st.caption("回答中的原始出处：" + raw)
-                if not matched:
-                    st.warning("这条出处没有映射到本轮 top-k 原文，可能只匹配到文件名。")
-                    continue
-                for c in matched:
-                    st.markdown("**" + html.escape(str(c.get("doc_title") or c.get("doc_id"))) + "**")
-                    st.caption("条款路径：" + str(c.get("clause_path") or "全文"))
-                    html_text = highlight_clause(str(c.get("text") or ""),
-                                                 str(c.get("clause_path") or ""))
-                    st.markdown(
-                        '<div style="max-height:320px;overflow:auto;line-height:1.7">'
-                        + html_text + "</div>",
-                        unsafe_allow_html=True,
-                    )
+        label = "[%d] %s（%s） · %s · %s" % (
+            idx, title, clause, year, _citation_status_label(status))
+        with st.expander(label, expanded=bool(expanded_first and idx == 1)):
+            if item:
+                st.caption("回答中的原始出处：" + raw)
+            if status == "clause_conflict":
+                actual = "、".join((item or {}).get("actual_clause") or [])
+                st.warning("条款号与原文不一致，原文实际为：" + actual)
+            if not matched:
+                st.caption("这条出处没有映射到本轮原文，可能只匹配到文件名。")
+                continue
+            for chunk in matched:
+                path = str(chunk.get("clause_path") or "全文")
+                st.caption("条款路径：" + path)
+                st.markdown(
+                    '<div class="cite-body">'
+                    + highlight_clause(str(chunk.get("text") or ""), path)
+                    + "</div>",
+                    unsafe_allow_html=True,
+                )
+                url = str(chunk.get("source_url") or "").strip()
+                if url.startswith("http"):
+                    st.markdown("[查看政策原文](" + url + ")")
+
+
+def render_citation_locator(st, citations: list[str], grounding: dict | None,
+                            chunks: list[dict]) -> None:
+    """兼容旧入口：选择一个出处，查看原文高亮。"""
+    if not citations:
+        return
+    st.subheader("引用定位")
+    selected = st.selectbox("选择一个出处，查看原文位置", citations, key="citation_locator")
+    item = find_citation_item(selected, grounding)
+    matched = find_matched_chunks(item, chunks)
+    if not matched:
+        st.warning("这条出处没有映射到本轮 top-k 原文，可能只是文件名匹配。")
+        return
+    for chunk in matched:
+        st.markdown("**" + html.escape(str(chunk.get("doc_title") or chunk.get("doc_id"))) + "**")
+        st.caption("条款路径：" + str(chunk.get("clause_path") or "全文"))
+        st.markdown(
+            '<div class="cite-body">'
+            + highlight_clause(str(chunk.get("text") or ""), str(chunk.get("clause_path") or ""))
+            + "</div>",
+            unsafe_allow_html=True,
+        )

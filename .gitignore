@@ -28,7 +28,9 @@ data/rank_probe_*.json
 # 运行时 trace / 本地会话库
 data/traces/
 data/memory.db
+data/memory.db.bak-*
 app/**/__pycache__/
 
 # 拼写检查本地配置（仅本地使用）
 cspell.json
+

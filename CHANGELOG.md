@@ -1,5 +1,14 @@
 # CHANGELOG
 
+## 2026-11-13 — UI 改造：会话 + 四层答案
+
+- 会话：`sessions` + `messages(meta_json)`；首问才落库，`?s=` 刷新恢复，多轮消息全量回放。
+- 答案：时效条 → 结论 → 要点 → 依据；依据默认折叠；`[出处]` 转 `[n]` 角标；同文件同条款去重。
+- 特殊态：超范围 / 资料不足 / 错误状态卡；拒答判定从「有无检索结果」改为「有无引用」。
+- 旧消息：启动时回填 `conclusion`，避免 `short_history` 退回整段正文。
+- 文件区：探针 → `scripts/experiments/`，历史文档 → `docs/handover/`；`verify.py` 等入口脚本不动。
+- 检索 / prompt / 评测口径未改；`verify.py` 4583 块通过。
+
 ## 2026-11-12 — 拒答判定修复
 
 - 修复 `is_refusal()`：只要正文带可核验出处，就不再判为整题拒答。2026-11-09 报告里 8 条非 boundary 误判（fact 2 / multi 2 / stale 4）全部带 1 条引用，5 条 boundary 全是 0 引用。
