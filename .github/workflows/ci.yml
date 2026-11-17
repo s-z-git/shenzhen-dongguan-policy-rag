@@ -1,0 +1,92 @@
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      # FAISS 的 C++ 文件 API 用窄字符路径，写不了含中文的目录（见 app/config.py 注释）。
+      # CI 工作区路径是纯 ASCII，但仍统一显式指定，避免依赖 $HOME 默认值。
+      REFRAG_DATA_DIR: ${{ github.workspace }}/refrag-data
+      RAG_INDEX_DIR: ${{ github.workspace }}/refrag-data/index
+      # huggingface_hub 的缓存根；实际模型落在 $HF_HOME/hub/ 下。
+      HF_HOME: ${{ github.workspace }}/refrag-data/hf
+      HF_HUB_DISABLE_TELEMETRY: "1"
+      # app/__init__.py 用 setdefault 把离线模式设成默认（本机模型已缓存，
+      # 启动 26s -> 3s）。CI 是干净 runner，首次必须联网下载模型，这里显式
+      # 置 0 覆盖掉；缓存命中时留着 0 也不联网，huggingface_hub 只读本地快照。
+      HF_HUB_OFFLINE: "0"
+      TRANSFORMERS_OFFLINE: "0"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # 嵌入模型约 92MB。键带版本号，换模型时手动改键即可重建。
+      - name: Cache embedding model
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/refrag-data/hf
+          key: hf-bge-small-zh-v1.5-${{ runner.os }}-v1
+
+      # chunks.jsonl / index.faiss / index.pkl 都是 gitignore 的生成物。
+      # key 绑到「语料 + 切块代码 + 依赖」的哈希：任何一项变，索引自动重建。
+      - name: Cache faiss index
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ github.workspace }}/refrag-data/index
+            data/chunks.jsonl
+          key: faiss-${{ hashFiles('data/raw/**', 'app/ingest/**', 'app/config.py', 'requirements.txt') }}
+
+      - name: Compile
+        run: python -m compileall -q app scripts
+
+      # 冷启动约 2.5 分钟（458 份文档 -> 4583 块 -> 编码），命中缓存后只做加载。
+      - name: Build index
+        run: python build_index.py
+
+      # 自检必须真的在 4583 块上跑过。单独抽出来断言，防止「绿勾但没有实际执行」。
+      - name: Verify (must report 4583 chunks)
+        run: |
+          python verify.py 2>&1 | tee verify.log
+          grep -q "4583 块" verify.log || {
+            echo "::error::verify.py 日志中没有 '4583 块'，自检可能未真正执行"
+            exit 1
+          }
+
+      - name: Unit tests (pure functions, no LLM / no network)
+        run: |
+          python scripts/test_two_level_citation.py
+          python scripts/test_citation_view.py
+          python scripts/test_stats_time.py
+          python scripts/test_clause_sibling.py
+          python scripts/test_llm_error.py
+          python scripts/test_city_scope.py
+
+      - name: Public wording latch
+        run: python scripts/check_public_wording.py
+
+      - name: Upload verify log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: verify-log
+          path: verify.log
+          if-no-files-found: warn

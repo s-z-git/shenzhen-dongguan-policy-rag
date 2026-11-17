@@ -1,0 +1,32 @@
+{"id": "a6-f01", "seq": 1, "type": "fact", "city": "深圳", "question": "深圳失业保险金标准是多少？", "expect": "answer", "note": "trace 原问；6 条 trace 重复问过"}
+{"id": "a6-f02", "seq": 2, "type": "fact", "city": "深圳", "question": "深圳硕士人才补贴有哪些？", "expect": "answer", "note": "trace 原问；历史上多次拒答，已知薄弱点"}
+{"id": "a6-f03", "seq": 3, "type": "fact", "city": "深圳", "question": "深圳高层次专业人才认定的标准和程序是怎样的？", "expect": "answer", "note": "新写（原版与 73 题相似度 0.77，已替换）"}
+{"id": "a6-f04", "seq": 4, "type": "fact", "city": "深圳", "question": "深圳退役士兵自主就业的一次性经济补助是怎么规定的？", "expect": "answer", "note": "替换原深圳本科补贴题（与 73 题近重复 0.81）；语料「退役」37 块"}
+{"id": "a6-f05", "seq": 5, "type": "fact", "city": "东莞", "question": "东莞市吸纳就业困难人员社保补贴覆盖哪些险种？", "expect": "answer", "note": "trace 原问（由多子问拆成单问）"}
+{"id": "a6-f06", "seq": 6, "type": "fact", "city": "东莞", "question": "东莞职业介绍补贴的标准是多少？", "expect": "answer", "note": "trace 原问（由多子问拆出）"}
+{"id": "a6-f07", "seq": 7, "type": "fact", "city": "东莞", "question": "东莞的灵活就业社保补贴最长能领多久？", "expect": "answer", "note": "trace 原问（单问版）"}
+{"id": "a6-f08", "seq": 8, "type": "fact", "city": "东莞", "question": "东莞技能大师工作室认定以后，每年有什么考核要求？", "expect": "answer", "note": "新写"}
+{"id": "a6-f09", "seq": 9, "type": "fact", "city": "无", "question": "城乡居民养老保险缴费档次是怎么分的？", "expect": "answer", "note": "新写；与 73 题问法不同"}
+{"id": "a6-f10", "seq": 10, "type": "fact", "city": "无", "question": "员工在岗参加技能提升培训后，补贴怎么申领？", "expect": "answer", "note": "新写"}
+{"id": "a6-f11", "seq": 11, "type": "fact", "city": "无", "question": "用人单位拖欠农民工工资，会被怎么处理？", "expect": "answer", "note": "新写"}
+{"id": "a6-f12", "seq": 12, "type": "fact", "city": "无", "question": "劳动合同解除后，经济补偿金按什么标准算？", "expect": "answer", "note": "新写"}
+{"id": "a6-m01", "seq": 13, "type": "multi", "city": "深圳", "question": "深圳硕士在深圳能申领哪些人才补贴？分别是多少？", "expect": "answer", "note": "trace 原问改写"}
+{"id": "a6-m02", "seq": 14, "type": "multi", "city": "深圳", "question": "深圳的公益性岗位补贴按什么标准发？能发多久？", "expect": "answer", "note": "新写（73 题只问「优先安排」）"}
+{"id": "a6-m03", "seq": 15, "type": "multi", "city": "深圳", "question": "深圳职业技能培训补贴包括哪些项目？个人申请和机构申请有什么区别？", "expect": "answer", "note": "trace 原问（换问法）"}
+{"id": "a6-m04", "seq": 16, "type": "multi", "city": "深圳", "question": "深圳的博士后进站后，生活补贴和出站留深补贴分别怎么发？", "expect": "answer", "note": "新写"}
+{"id": "a6-m05", "seq": 17, "type": "multi", "city": "东莞", "question": "东莞的创新创业大赛获奖项目，落地东莞后能拿多少奖励？还要满足什么条件？", "expect": "answer", "note": "新写"}
+{"id": "a6-m06", "seq": 18, "type": "multi", "city": "东莞", "question": "东莞事业单位公开招聘，对报名人员的资格条件有哪些要求？", "expect": "answer", "note": "替换原严重失信企业题（「信用/失信」共 163/78 块但无认定与惩戒条文）；语料「事业单位公开招聘」有专章"}
+{"id": "a6-m07", "seq": 19, "type": "multi", "city": "东莞", "question": "东莞制造业企业招用重点群体就业，能享受哪些税收优惠？", "expect": "answer", "note": "原 a6-m08 前移；「重点群体」19 块、「税收优惠」11 块"}
+{"id": "a6-m08", "seq": 20, "type": "multi", "city": "东莞", "question": "东莞员工制家政企业吸纳就业，社保补贴按什么比例补？", "expect": "answer", "note": "替换原 a6-m07（与 73 题近重复 0.76）；「家政」80 块"}
+{"id": "a6-m09", "seq": 21, "type": "multi", "city": "无", "question": "失业保险金申领需要满足哪些条件？能领多久？", "expect": "answer", "note": "新写"}
+{"id": "a6-m10", "seq": 22, "type": "multi", "city": "无", "question": "工伤认定的申请时限是多久？职工和单位分别从什么时候开始算？", "expect": "answer", "note": "新写"}
+{"id": "a6-s01", "seq": 23, "type": "stale", "city": "深圳", "question": "深圳的最低工资标准现在执行的是哪一年的？前后调整过几次？", "expect": "answer", "note": "新写"}
+{"id": "a6-s02", "seq": 24, "type": "stale", "city": "深圳", "question": "深圳的失业保险金标准跟几年前比有变化吗？", "expect": "answer", "note": "新写"}
+{"id": "a6-s03", "seq": 25, "type": "stale", "city": "东莞", "question": "东莞的最低工资标准现行版本跟上一版比，上调了多少？", "expect": "answer", "note": "新写"}
+{"id": "a6-s04", "seq": 26, "type": "stale", "city": "东莞", "question": "东莞的就业困难人员认定范围，新版和旧版比有什么变化？", "expect": "answer", "note": "新写"}
+{"id": "a6-s05", "seq": 27, "type": "stale", "city": "无", "question": "工伤保险的阶段性降费率政策现在还在执行吗？", "expect": "answer", "note": "新写；与 73 题「2016 年新通知」不同角度"}
+{"id": "a6-s06", "seq": 28, "type": "stale", "city": "无", "question": "人才引进的租房和购房补贴政策有被废止或调整过吗？", "expect": "answer", "note": "新写"}
+{"id": "a6-b01", "seq": 29, "type": "boundary", "city": "无", "question": "去香港工作需要办什么签证？", "expect": "refuse", "note": "trace 原问；不在深莞人社语料"}
+{"id": "a6-b02", "seq": 30, "type": "boundary", "city": "无", "question": "广州灵活就业社保补贴一个月多少钱？", "expect": "refuse", "note": "trace 原问；**跨城市不越主题**，最危险的一类边界"}
+{"id": "a6-x01", "seq": 31, "type": "followup", "city": "东莞", "question": "那东莞呢？", "expect": "answer", "note": "trace 原问；换城市追问", "history": ["深圳失业保险金标准是多少？", "根据现有资料，深圳的失业保险金标准为本市月最低工资标准的 80%。"], "diagnostic": true, "score": false}
+{"id": "a6-x02", "seq": 32, "type": "followup", "city": "深圳", "question": "那深圳呢？", "expect": "answer", "note": "trace 原问；换城市追问", "history": ["东莞失业保险金标准是多少？", "根据现有资料，东莞的失业保险金由社会保险经办机构按照领取地最低工资标准的 90% 按月计发。"], "diagnostic": true, "score": false}
