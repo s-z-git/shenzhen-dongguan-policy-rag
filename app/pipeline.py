@@ -24,6 +24,8 @@ from app.retrieve.doc_select import (dedupe_docs_newest, pick_section_chunk,
                                prefer_clause_sibling)
 from app.retrieve.rerank import rerank, rerank_available
 from app.observability import TraceRecorder
+from app.generate.recall import detect_recall, format_recall
+from app.memory import SessionStore
 
 NL = chr(10)   # 换行符常量
 
@@ -134,6 +136,64 @@ class RAGPipeline:
         self.doc_clause_index = build_doc_clause_index(chunks)
 
     # ---------------- 构建 / 加载 ----------------
+    @staticmethod
+    def _recall_kind(question: str, session_id: str | None) -> str | None:
+        """会话回顾只处理纯回顾问句；域外城市问句优先走拒答。"""
+        if not session_id:
+            return None
+        # city_scope 是纯函数；_retrieve 里还会再判一次，重复但安全。
+        if city_scope(question).get("pure_out_of_scope"):
+            return None
+        return detect_recall(question)
+
+    def _recall_result(self, question: str, kind: str, text: str,
+                       trace: TraceRecorder, started: float,
+                       trace_path=None) -> dict:
+        """回顾类问句的确定性返回：不检索、不调 LLM、不带引用。"""
+        elapsed_ms = (time.perf_counter() - started) * 1000
+        trace.set("recall_kind", kind)
+        trace.set("search_question", question)
+        trace.set("used_history", True)
+        trace.set("out_of_scope_city", [])
+        trace.set("refused", False)
+        trace.set("retrieved_chunks", [])
+        trace.set("answer_chars", len(text))
+        trace.set("status", "ok")
+        trace.set("llm_calls", 0)
+        if self.cfg.trace_enabled:
+            trace.finish(trace_path or self.cfg.trace_path)
+        return {
+            "answer": text,
+            "citations": [],
+            "notes": ["这是会话记录，不是政策依据。"],
+            "refused": False,
+            "prompt": "",
+            "prompt_version": self.cfg.answer_prompt_version,
+            "usage": {},
+            "grounding": {"status": "not_applicable", "citations": {}, "numbers": {}},
+            "question": question,
+            "search_question": question,
+            "used_history": True,
+            "trace_id": trace.trace_id,
+            "analysis": {"recall_kind": kind},
+            "filters": {},
+            "chunks": [],
+            "sources": [],
+            "used_rerank": False,
+            "n_sub_questions": 0,
+            "doc_cap": self.cfg.doc_cap,
+            "relaxed_year": False,
+            "stages": {},
+            "first_token_ms": 0,
+            "ttft_ms": 0,
+            "elapsed_ms": round(elapsed_ms, 2),
+            "status": "ok",
+            "answer_type": "session_recall",
+            "recall_kind": kind,
+            "llm_calls": 0,
+            "out_of_scope_city": [],
+        }
+
     @classmethod
     def build(cls, cfg: Config | None = None, verbose: bool = True) -> "RAGPipeline":
         """离线构建：解析 PDF → 条款切分 → 向量编码 → FAISS 索引 → 落盘。
@@ -446,7 +506,14 @@ class RAGPipeline:
         返回: dict，包含 answer、citations、notes、grounding、
               chunks、sources、stages 等完整字段
         """
+        started = time.perf_counter()
         trace = TraceRecorder(question, self.cfg.answer_prompt_version, session_id)
+        kind = self._recall_kind(question, session_id)
+        if kind:
+            memory = SessionStore(self.cfg.memory_db)
+            turns = memory.recall_turns(session_id, current_question=question)
+            return self._recall_result(question, kind, format_recall(kind, turns),
+                                       trace, started, trace_path)
         # 同步与流式共用同一份检索编排，避免两条入口未来分叉。
         search_question, an, filters, res = self._retrieve(
             question, use_rerank, top_k, use_llm_analysis, use_sub_questions,
@@ -531,6 +598,40 @@ class RAGPipeline:
         sink = sink if sink is not None else {}
         started = time.perf_counter()
         trace = TraceRecorder(question, self.cfg.answer_prompt_version, session_id)
+        kind = self._recall_kind(question, session_id)
+        if kind:
+            memory = SessionStore(self.cfg.memory_db)
+            turns = memory.recall_turns(session_id, current_question=question)
+            out = self._recall_result(question, kind, format_recall(kind, turns),
+                                      trace, started, trace_path)
+            sink.update({
+                "question": question,
+                "search_question": question,
+                "used_history": True,
+                "trace_id": out["trace_id"],
+                "analysis": out["analysis"],
+                "filters": {},
+                "chunks": [],
+                "sources": [],
+                "used_rerank": False,
+                "n_sub_questions": 0,
+                "doc_cap": self.cfg.doc_cap,
+                "relaxed_year": False,
+                "stages": {},
+                "notes": out["notes"],
+                "will_refuse": False,
+                "first_token_ms": 0,
+                "ttft_ms": 0,
+                "answer": out["answer"],
+                "citations": [],
+                "refused": False,
+                "grounding": out["grounding"],
+                "answer_type": "session_recall",
+                "recall_kind": kind,
+                "llm_calls": 0,
+            })
+            sink["result"] = out
+            return iter([out["answer"]])
 
         try:
             search_question, analysis, filters, res = self._retrieve(

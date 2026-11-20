@@ -294,6 +294,36 @@ class SessionStore:
             out.append({"role": "assistant", "content": (conclusion or content)[:120]})
         return out
 
+    def recall_turns(self, session_id: str, limit: int = 5,
+                     current_question: str | None = None) -> list[dict]:
+        """按时间正序返回最近 N 轮「问题 + 结论」，供会话回顾使用。
+
+        current_question 用于 UI 场景：UI 会先把当前提问写入 messages，
+        这里把它从历史中剔除，避免“我刚才问了什么”答成它自己。
+        """
+        msgs = self.get_messages(session_id)
+        if (current_question and msgs and msgs[-1]["role"] == "user"
+                and msgs[-1]["content"].strip() == current_question.strip()):
+            msgs = msgs[:-1]
+
+        pairs: list[dict] = []
+        pending: dict | None = None
+        for item in msgs:
+            if item["role"] == "user":
+                if pending is not None:
+                    pairs.append(pending)
+                pending = {"question": item["content"], "answer": ""}
+                continue
+            if item["role"] == "assistant" and pending is not None:
+                meta = item.get("meta") if isinstance(item.get("meta"), dict) else {}
+                conclusion = str(meta.get("conclusion") or "")
+                pending["answer"] = (conclusion or item["content"] or "")[:120]
+                pairs.append(pending)
+                pending = None
+        if pending is not None:
+            pairs.append(pending)
+        return pairs[-max(1, limit):]
+
     def clear(self, session_id: str) -> None:
         """只清消息、保留会话壳（兼容旧入口）。"""
         if not session_id:

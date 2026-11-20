@@ -391,6 +391,12 @@ def render_footer(result: dict) -> None:
 
 
 def render_answer(result: dict) -> None:
+    if result.get("answer_type") == "session_recall":
+        render_state_card("info", "会话回顾", "这是会话记录，不是政策依据。")
+        st.markdown(str(result.get("answer") or ""))
+        st.caption("trace_id：" + str(result.get("trace_id") or "无"))
+        return
+
     if result.get("error"):
         raw = str(result.get("error") or "未知错误")
         lowered = raw.lower()
@@ -486,6 +492,9 @@ def result_from_message(message: dict, chunks_by_id: dict) -> dict:
         "relaxed_year": bool(meta.get("relaxed_year")),
         "analysis": meta.get("analysis") or {},
         "filters": meta.get("filters") or {},
+        "answer_type": meta.get("answer_type") or "",
+        "recall_kind": meta.get("recall_kind") or "",
+        "llm_calls": meta.get("llm_calls"),
     }
 
 
@@ -503,6 +512,9 @@ def result_to_meta(result: dict) -> dict:
         "relaxed_year": bool(result.get("relaxed_year")),
         "analysis": result.get("analysis") or {},
         "filters": result.get("filters") or {},
+        "answer_type": result.get("answer_type") or "",
+        "recall_kind": result.get("recall_kind") or "",
+        "llm_calls": result.get("llm_calls"),
         "chunk_ids": [c.get("chunk_id") for c in (result.get("chunks") or [])],
         "conclusion": conclusion_text(str(result.get("answer") or "")),
     }
@@ -570,10 +582,22 @@ def handle_question(pipe, memory: SessionStore, session_id: str, question: str,
             st.rerun()
             return
         chunks = sink.get("chunks") or []
-        status.update(
-            label=("检索失败" if sink.get("error") else "找到 %d 条依据" % len(chunks)),
-            state=("error" if sink.get("error") else "complete"),
-        )
+        if sink.get("answer_type") == "session_recall":
+            status.update(label="会话回顾", state="complete")
+        else:
+            status.update(
+                label=("检索失败" if sink.get("error") else "找到 %d 条依据" % len(chunks)),
+                state=("error" if sink.get("error") else "complete"),
+            )
+
+    if sink.get("answer_type") == "session_recall":
+        st.write_stream(stream)
+        result = sink.get("result") or {}
+        result["ui_mode"] = effort
+        memory.add_turn(session_id, "assistant", result.get("answer") or "",
+                        result_to_meta(result))
+        st.rerun()
+        return
 
     if sink.get("error"):
         result = sink.get("result") or {"error": "检索失败", "question": question}
